@@ -32,8 +32,7 @@ func PrepareString(s string) string {
 	return SortStringByCharacter(strings.ToLower(s))
 }
 
-
-func loadWords(res http.ResponseWriter, req *http.Request) {
+func LoadWords(res http.ResponseWriter, req *http.Request) {
 	b, err := ioutil.ReadAll(req.Body)
 	defer req.Body.Close()
 	if err != nil {
@@ -53,7 +52,7 @@ func loadWords(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func getAnagrams(res http.ResponseWriter, req *http.Request) {
+func GetAnagrams(res http.ResponseWriter, req *http.Request) {
 	word := req.URL.Query().Get("word")
 	if word == "" {
 		http.Error(res, "Error: 'word' parameter was not provided", http.StatusBadRequest)
@@ -69,14 +68,22 @@ func getAnagrams(res http.ResponseWriter, req *http.Request) {
 	res.Write(output)
 }
 
+func SetupHandlers() *http.ServeMux {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/load", LoadWords)
+	mux.HandleFunc("/get", GetAnagrams)
+
+	return mux
+}
+
 func main() {
 	dictionary = make(map[string][]string)
 
-	http.HandleFunc("/load", loadWords)
-	http.HandleFunc("/get", getAnagrams)
+	mux := SetupHandlers()
 
 	fmt.Printf("Starting server at port 8080\n")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":8080", mux); err != nil {
 		log.Fatal(err)
 	}
 }
